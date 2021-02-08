@@ -48,7 +48,7 @@ APPNAME="${APPNAME:-template}"
 APPDIR="${APPDIR:-$SHARE/CasjaysDev/iconmgr}/$APPNAME"
 REPO="${ICONMGRREPO:-https://github.com/iconmgr}/${APPNAME}"
 REPORAW="${REPORAW:-$REPO/raw}"
-APPVERSION="$(curl -LSs $REPORAW/master/version.txt)"
+APPVERSION="$(__appversion "$REPORAW/master/version.txt")"
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -69,7 +69,7 @@ show_optvars "$@"
 APP=""
 
 # install packages - useful for package that have the same name on all oses
-install_packages $APP
+install_packages "$APP"
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -82,14 +82,17 @@ ensure_perms
 
 # Main progam
 
+if [ -d "$APPDIR" ]; then
+  execute "backupapp $APPDIR $APPNAME" "Backing up $APPDIR"
+fi
+
 if [ -d "$APPDIR/.git" ]; then
   execute \
     "git_update $APPDIR" \
     "Updating $APPNAME configurations"
 else
   execute \
-    "backupapp && \
-        git_clone -q $REPO/$APPNAME $APPDIR" \
+    "git_clone $REPO/$APPNAME $APPDIR" \
     "Installing $APPNAME configurations"
 fi
 
