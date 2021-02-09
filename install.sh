@@ -1,125 +1,89 @@
 #!/usr/bin/env bash
-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 APPNAME="template"
 USER="${SUDO_USER:-${USER}}"
 HOME="${USER_HOME:-${HOME}}"
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# @Author          : Jason
-# @Contact         : casjaysdev@casjay.net
-# @File            : install.sh
-# @Created         : Fr, Aug 28, 2020, 00:00 EST
-# @License         : WTFPL
-# @Copyright       : Copyright (c) CasjaysDev
-# @Description     : installer script for Template theme
-#
+#set opts
+exit 1 # Template
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Set functions
-
-SCRIPTSFUNCTURL="${SCRIPTSAPPFUNCTURL:-https://github.com/casjay-dotfiles/scripts/raw/master/functions}"
-SCRIPTSFUNCTDIR="${SCRIPTSAPPFUNCTDIR:-/usr/local/share/CasjaysDev/scripts}"
+##@Version       : 020920210204-git
+# @Author        : Jason Hempstead
+# @Contact       : jason@casjaysdev.com
+# @License       : LICENSE.md
+# @ReadME        : README.md
+# @Copyright     : Copyright: (c) 2021 Jason Hempstead, CasjaysDev
+# @Created       : Tuesday, Feb 09, 2021 02:04 EST
+# @File          : install.sh
+# @Description   : Installer for template theme
+# @TODO          :
+# @Other         :
+# @Resource      :
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Import functions
+CASJAYSDEVDIR="${CASJAYSDEVDIR:-/usr/local/share/CasjaysDev/scripts}"
+SCRIPTSFUNCTDIR="${CASJAYSDEVDIR:-/usr/local/share/CasjaysDev/scripts}/functions"
 SCRIPTSFUNCTFILE="${SCRIPTSAPPFUNCTFILE:-app-installer.bash}"
-
+SCRIPTSFUNCTURL="${SCRIPTSAPPFUNCTURL:-https://github.com/dfmgr/installer/raw/master/functions}"
+connect_test() { ping -c1 1.1.1.1 &>/dev/null || curl --disable -LSs --connect-timeout 3 --retry 0 --max-time 1 1.1.1.1 2>/dev/null | grep -e "HTTP/[0123456789]" | grep -q "200" -n1 &>/dev/null; }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-if [ -f "$SCRIPTSFUNCTDIR/functions/$SCRIPTSFUNCTFILE" ]; then
-  . "$SCRIPTSFUNCTDIR/functions/$SCRIPTSFUNCTFILE"
-elif [ -f "$HOME/.local/share/CasjaysDev/functions/$SCRIPTSFUNCTFILE" ]; then
-  . "$HOME/.local/share/CasjaysDev/functions/$SCRIPTSFUNCTFILE"
-else
+if [ -f "$PWD/$SCRIPTSFUNCTFILE" ]; then
+  . "$PWD/$SCRIPTSFUNCTFILE"
+elif [ -f "$SCRIPTSFUNCTDIR/$SCRIPTSFUNCTFILE" ]; then
+  . "$SCRIPTSFUNCTDIR/$SCRIPTSFUNCTFILE"
+elif connect_test; then
   curl -LSs "$SCRIPTSFUNCTURL/$SCRIPTSFUNCTFILE" -o "/tmp/$SCRIPTSFUNCTFILE" || exit 1
   . "/tmp/$SCRIPTSFUNCTFILE"
+else
+  echo "Can not load the functions file: $SCRIPTSFUNCTDIR/$SCRIPTSFUNCTFILE" 1>&2
+  exit 1
 fi
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Call the main function
 system_installdirs
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # Make sure the scripts repo is installed
-
 scripts_check
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # Defaults
 APPNAME="${APPNAME:-template}"
-APPDIR="${APPDIR:-$SHARE/CasjaysDev/iconmgr}/$APPNAME"
-REPO="${ICONMGRREPO:-https://github.com/iconmgr}/${APPNAME}"
+APPDIR="${APPDIR:-$SHARE/CasjaysDev/iconmgr/$APPNAME}"
+INSTDIR="${APPDIR}"
+REPO="${ICONMGRREPO:-https://github.com/iconmgr/$APPNAME}"
 REPORAW="${REPORAW:-$REPO/raw}"
 APPVERSION="$(__appversion "$REPORAW/master/version.txt")"
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# dfmgr_install fontmgr_install iconmgr_install pkmgr_install systemmgr_install thememgr_install wallpapermgr_install
-
+# Call the thememgr function
 thememgr_install
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # Script options IE: --help
-
 show_optvars "$@"
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# end with a space
-
-APP=""
-
-# install packages - useful for package that have the same name on all oses
-install_packages "$APP"
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # Ensure directories exist
-
 ensure_dirs
 ensure_perms
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # Main progam
-
-if [ -d "$APPDIR" ]; then
-  execute "backupapp $APPDIR $APPNAME" "Backing up $APPDIR"
+if __am_i_online; then
+  if [ -d "$INSTDIR/.git" ]; then
+    execute "git_update $INSTDIR" "Updating $APPNAME theme pack"
+  else
+    execute "git_clone $REPO/$APPNAME $INSTDIR" "Installing $APPNAME theme pack"
+  fi
+  # exit on fail
+  failexitcode $? "Git has failed"
 fi
-
-if [ -d "$APPDIR/.git" ]; then
-  execute \
-    "git_update $APPDIR" \
-    "Updating $APPNAME configurations"
-else
-  execute \
-    "git_clone $REPO/$APPNAME $APPDIR" \
-    "Installing $APPNAME configurations"
-fi
-
-# exit on fail
-failexitcode
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # run post install scripts
-
 run_postinst() {
   thememgr_run_post
 }
-
-execute \
-  "run_postinst" \
-  "Running post install scripts"
-
+#
+execute "run_postinst" "Running post install scripts"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # create version file
-
 thememgr_install_version
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # exit
 run_exit
-
 # end
