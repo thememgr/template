@@ -47,21 +47,24 @@ scripts_check
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Defaults
 APPNAME="${APPNAME:-template}"
-APPDIR="${APPDIR:-$SHARE/CasjaysDev/iconmgr/$APPNAME}"
-INSTDIR="${APPDIR}"
-REPO="${ICONMGRREPO:-https://github.com/iconmgr/$APPNAME}"
-REPORAW="${REPORAW:-$REPO/raw}"
-APPVERSION="$(__appversion "$REPORAW/master/version.txt")"
+APPDIR="$SHARE/CasjaysDev/thememgr/$APPNAME"
+INSTDIR="$SHARE/CasjaysDev/thememgr/$APPNAME"
+REPO_BRANCH="${GIT_REPO_BRANCH:-master}"
+REPO="${THEMEMGRREPO:-https://github.com/thememgr}/$APPNAME"
+REPORAW="$REPO/raw/$REPO_BRANCH"
+APPVERSION="$(__appversion "$REPORAW/version.txt")"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Require a version higher than
 thememgr_req_version "$APPVERSION"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Call the thememgr function
 thememgr_install
-thememgr_run_init
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Script options IE: --help
 show_optvars "$@"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# initialize the installer
+thememgr_run_init
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Ensure directories exist
 ensure_dirs
@@ -72,7 +75,7 @@ if __am_i_online; then
   if [ -d "$INSTDIR/.git" ]; then
     execute "git_update $INSTDIR" "Updating $APPNAME theme pack"
   else
-    execute "git_clone $REPO/$APPNAME $INSTDIR" "Installing $APPNAME theme pack"
+    execute "git_clone $REPO $INSTDIR" "Installing $APPNAME theme pack"
   fi
   # exit on fail
   failexitcode $? "Git has failed"
@@ -88,6 +91,10 @@ execute "run_postinst" "Running post install scripts"
 # create version file
 thememgr_install_version
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# exit
+# run exit function
 run_exit
-# end
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# End application
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# lets exit with code
+exit ${exitCode:-$?}
